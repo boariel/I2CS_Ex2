@@ -10,56 +10,85 @@ import java.io.Serializable;
 public class Map implements Map2D, Serializable{
 
     // edit this class below
+    private int[][] map;
 	/**
 	 * Constructs a w*h 2D raster map with an init value v.
-	 * @param w
-	 * @param h
-	 * @param v
+	 * @param w the width of the map.
+	 * @param h the height of map.
+	 * @param v the init value of all the entries in the map.
 	 */
 	public Map(int w, int h, int v) {init(w, h, v);}
+
 	/**
 	 * Constructs a square map (size*size).
-	 * @param size
+	 * @param size width and height of map
 	 */
 	public Map(int size) {this(size,size, 0);}
 	
 	/**
 	 * Constructs a map from a given 2D array.
-	 * @param data
+	 * @param data copied array
 	 */
 	public Map(int[][] data) {
 		init(data);
 	}
+
 	@Override
 	public void init(int w, int h, int v) {
-
+        map = new int[h][w];
+        for (int i = 0; i < h; i++) {
+            for (int j = 0; j < w; j++) {
+                map[h][w] = v;
+            }
+        }
 	}
 	@Override
-	public void init(int[][] arr) {
+	public void init(int[][] arr) throws RuntimeException{
+        if (arr==null)
+            throw new RuntimeException("Cannot copy null array.");
+        if (arr.length==0)
+            throw new RuntimeException("The array cannot be empty.");
+        for (int i = 0; i < arr.length; i++) {
+            if (arr[i].length!=arr[0].length)
+                throw new RuntimeException("The cannot be ragged.");
+        }
+        int h = arr.length;
+        int w = arr[0].length;
+        map = new int[h][w];
+        for (int i = 0; i < h; i++) {
+            for (int j = 0; j < w; j++) {
+                map[h][w] = arr[h][w];
+            }
+        }
 
 	}
 	@Override
 	public int[][] getMap() {
 		int[][] ans = null;
-
+        ans = new int[this.map.length][this.map[0].length];
+        for (int i = 0; i < map.length; i++) {
+            for (int j = 0; j < this.map[0].length; j++) {
+                ans[i][j] = this.map[i][j];
+            }
+        }
 		return ans;
 	}
 	@Override
 	public int getWidth() {
         int ans = -1;
-
+        ans = this.map[0].length;
         return ans;
     }
 	@Override
 	public int getHeight() {
         int ans = -1;
-
+        ans = this.map.length;
         return ans;
     }
 	@Override
 	public int getPixel(int x, int y) {
         int ans = -1;
-
+        ans = this.map[x][y];
         return ans;
     }
 	@Override
