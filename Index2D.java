@@ -42,7 +42,7 @@ public class Index2D implements Pixel2D {
 
     @Override
     public String toString() {
-        String ans = "Width(x): "+this.width + " Height(y): "+this.height;
+        String ans = "Width(x):"+this.width + " , Height(y):"+this.height;
         return ans;
     }
 
