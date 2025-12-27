@@ -1,9 +1,6 @@
 package assignments.Ex2;
 import java.io.Serializable;
-import java.util.AbstractQueue;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.Queue;
+import java.util.*;
 
 /**
  * This class represents a 2D map (int[w][h]) as a "screen" or a raster matrix or maze over integers.
@@ -43,7 +40,7 @@ public class Map implements Map2D, Serializable{
         map = new int[h][w];
         for (int i = 0; i < h; i++) {
             for (int j = 0; j < w; j++) {
-                map[h][w] = v;
+                map[i][j] = v;
             }
         }
 	}
@@ -62,10 +59,9 @@ public class Map implements Map2D, Serializable{
         map = new int[h][w];
         for (int i = 0; i < h; i++) {
             for (int j = 0; j < w; j++) {
-                map[h][w] = arr[h][w];
+                map[i][j] = arr[i][j];
             }
         }
-
 	}
 
 	@Override
@@ -101,7 +97,7 @@ public class Map implements Map2D, Serializable{
 	@Override
 	public int getPixel(int x, int y) {
         int ans = -1;
-        ans = this.map[x][y];
+        ans = this.map[y][x];
         return ans;
     }
     /**
@@ -114,7 +110,7 @@ public class Map implements Map2D, Serializable{
         int ans = -1;
         int x = p.getX();
         int y = p.getY();
-        ans = this.map[x][y];
+        ans = this.map[y][x];
         return ans;
 	}
 
@@ -126,7 +122,7 @@ public class Map implements Map2D, Serializable{
      */
 	@Override
 	public void setPixel(int x, int y, int v) {
-        this.map[x][y] = v;
+        this.map[y][x] = v;
     }
 
     /**
@@ -138,7 +134,7 @@ public class Map implements Map2D, Serializable{
 	public void setPixel(Pixel2D p, int v) {
         int x = p.getX();
         int y = p.getY();
-        this.map[x][y] = v;
+        this.map[y][x] = v;
 	}
 
     /**
@@ -151,9 +147,9 @@ public class Map implements Map2D, Serializable{
         boolean ans = true;
         int x = p.getX();
         int y = p.getY();
-        if (x>=this.map.length)
+        if (x>=this.getWidth())
             ans = false;
-        if (y>=this.map[0].length)
+        if (y>=this.getHeight())
             ans = false;
         return ans;
     }
@@ -166,7 +162,7 @@ public class Map implements Map2D, Serializable{
     @Override
     public boolean sameDimensions(Map2D p) {
         boolean ans = false;
-        if (p.getWidth()==this.map[0].length&&p.getHeight()==this.map.length)
+        if (p.getWidth()==this.getWidth()&&p.getHeight()==this.getHeight())
             ans = true;
         return ans;
     }
@@ -180,7 +176,7 @@ public class Map implements Map2D, Serializable{
         if (this.sameDimensions(p)){
             for (int i = 0; i < this.getWidth(); i++) {
                 for (int j = 0; j < this.getHeight(); j++) {
-                    this.map[i][j] += p.getPixel(i,j);
+                    this.map[j][i] += p.getPixel(i,j);
                 }
             }
         }
@@ -195,7 +191,7 @@ public class Map implements Map2D, Serializable{
         int sca = (int)scalar;
         for (int i = 0; i < this.getWidth(); i++) {
             for (int j = 0; j < this.getHeight(); j++) {
-                this.map[i][j] *=sca;
+                this.map[j][i] *=sca;
             }
         }
     }
@@ -207,12 +203,19 @@ public class Map implements Map2D, Serializable{
      */
     @Override
     public void rescale(double sx, double sy) {
-        int[][] nm = new int[(int)(sy*this.getHeight())][(int)(sx*this.getWidth())];
-        for (int i = 0; i < nm.length; i++) {
-            for (int j = 0; j < nm[0].length; j++) {
-                nm[j][i] = this.getPixel((int)(sx*j),(int)(sy*i));
+        int newW = (int)Math.round(getWidth() * sx);
+        int newH = (int)Math.round(getHeight() * sy);
+        int[][] newMap = new int[newH][newW];
+        for (int y = 0; y < newH; y++) {
+            for (int x = 0; x < newW; x++) {
+                int srcX = (int) (x/sx);
+                int srcY = (int) (y/sy);
+                srcX = Math.min(srcX,getWidth() - 1);
+                srcY = Math.min(srcY,getHeight() - 1);
+                newMap[y][x] = map[srcY][srcX];
             }
         }
+        map = newMap;
     }
 
     /**
@@ -243,28 +246,36 @@ public class Map implements Map2D, Serializable{
     public void drawLine(Pixel2D p1, Pixel2D p2, int color) {
         double dx = Math.abs(p2.getX()-p1.getX());
         double dy = Math.abs(p2.getY()-p1.getY());
-        double m = (p2.getY()-p1.getX())/(p2.getY()-p1.getY());
-        double b = p1.getY()-(m*p1.getX());
-        if (p1.equals(p2)){
-            this.setPixel(p1,color);
-        }
-        else if(dx>=dy&&p1.getX()<p2.getX()){
-            for (int i = 0; i <= (int)dx; i++) {
-                Index2D cp = new Index2D(p1.getX()+i, (int)Math.round((m*(p1.getX()+i))+b));
-                this.setPixel(cp,color);
+        double m;
+        if (dx!=0) {
+            m = dy/dx;
+            double b = p1.getY()-(m*p1.getX());
+            if (p1.equals(p2)){
+                this.setPixel(p1,color);
+            }
+            else if(dx>=dy&&p1.getX()<p2.getX()){
+                for (int i = 0; i <= (int)dx; i++) {
+                    Index2D cp = new Index2D(p1.getX()+i, (int)Math.round((m*(p1.getX()+i))+b));
+                    this.setPixel(cp,color);
+                }
+            }
+            else if (dx>=dy&&p1.getX()>p2.getX()) {
+                this.drawLine(p2,p1,color);
+            }
+            else if(dx<dy && p1.getY()<p2.getY()) {
+                for (int i = 0; i <= (int)dy; i++) {
+                    Index2D cp = new Index2D(p1.getY()+i, (int)Math.round((m*(p1.getY()+i))+b));
+                    this.setPixel(cp,color);
+                }
+            }
+            else if(dy>dx && p1.getY()>p2.getY()) {
+                this.drawLine(p2,p1,color);
             }
         }
-        else if (dx>=dy&&p1.getX()>p2.getX()) {
-            this.drawLine(p2,p1,color);
-        }
-        else if(dx<dy && p1.getY()<p2.getY()) {
-            for (int i = 0; i <= (int)dy; i++) {
-                Index2D cp = new Index2D(p1.getY()+i, (int)Math.round((m*(p1.getY()+i))+b));
-                this.setPixel(cp,color);
+        else {
+            for (int y = Math.min(p1.getY(),p2.getY()); y <=Math.max(p1.getY(),p2.getY()) ; y++) {
+                this.map[y][p1.getX()] = color;
             }
-        }
-        else if(dy>dx && p1.getY()>p2.getY()) {
-            this.drawLine(p2,p1,color);
         }
     }
 
@@ -276,36 +287,13 @@ public class Map implements Map2D, Serializable{
      */
     @Override
     public void drawRect(Pixel2D p1, Pixel2D p2, int color) {
-        if (p1.getX()> p2.getX()) {
-            for (int i = p1.getX(); i > p2.getX(); i--) {
-                if (p1.getY()>p2.getY()) {
-                    for (int j = p1.getY(); j > p2.getY(); j--) {
-                        Index2D cp = new Index2D(i, j);
-                        this.setPixel(cp, color);
-                    }
-                }
-                else{
-                    for (int j = p1.getY(); j < p2.getY(); j++) {
-                        Index2D cp = new Index2D(i, j);
-                        this.setPixel(cp, color);
-                    }
-                }
-            }
-        }
-        else {
-            for (int i = p1.getX(); i < p2.getX(); i++) {
-                if (p1.getY()>p2.getY()) {
-                    for (int j = p1.getY(); j > p2.getY(); j--) {
-                        Index2D cp = new Index2D(i, j);
-                        this.setPixel(cp, color);
-                    }
-                }
-                else{
-                    for (int j = p1.getY(); j < p2.getY(); j++) {
-                        Index2D cp = new Index2D(i, j);
-                        this.setPixel(cp, color);
-                    }
-                }
+        int xMin = Math.min(p1.getX(), p2.getX());
+        int xMax = Math.max(p1.getX(), p2.getX());
+        int yMin = Math.min(p1.getY(), p2.getY());
+        int yMax = Math.max(p1.getY(), p2.getY());
+        for (int y = yMin; y <= yMax; y++) {
+            for (int x = xMin; x <= xMax; x++) {
+                setPixel(x, y, color);
             }
         }
     }
@@ -326,7 +314,7 @@ public class Map implements Map2D, Serializable{
         else{
             for (int i = 0; i < this.getWidth(); i++) {
                 for (int j = 0; j < this.getHeight(); j++) {
-                    if (this.getPixel(i,j)!=((Map2D) ob).getPixel(i,j))
+                    if (this.getPixel(i,j)!=((Map2D)ob).getPixel(i,j))
                         ans = false;
                 }
             }
@@ -337,44 +325,105 @@ public class Map implements Map2D, Serializable{
     /**
      * This function fill a new color in a group of pixels of the same color
      * starting from a given pixel xy.
-     * The function does this by checking every recolored pixel in all directions and
-     * if it finds another pixel of the same color as the original one it recolors it too.
+     * The function does this by using flood fills presented in:
+     * https://en.wikipedia.org/wiki/Flood_fill
      * @param xy the pixel to start from.
      * @param new_v - the new "color" to be filled in p's connected component.
      * @param cyclic if the map is cyclic
      * @return amount of pixels recolored
      */
-	@Override
-	public int fill(Pixel2D xy, int new_v,  boolean cyclic) {
-		int ans = -1;
-        int oc = this.getPixel(xy);
-        if (this.getPixel(xy)!=new_v){
-            this.setPixel(xy,new_v);
-            ans = fill(xy,oc,new_v,1,cyclic);
+    @Override
+    public int fill(Pixel2D xy, int new_v, boolean cyclic) {
+        int oldColor = getPixel(xy);
+        if (oldColor == new_v) return 0;
+        int count = 0;
+        boolean[][] visited = new boolean[getHeight()][getWidth()];
+        ArrayDeque<Pixel2D> q = new ArrayDeque<>();
+        q.add(xy);
+        visited[xy.getY()][xy.getX()] = true;
+        setPixel(xy, new_v);
+        count++;
+        int[] dx = {1, -1, 0, 0};
+        int[] dy = {0, 0, 1, -1};
+        while (!q.isEmpty()) {
+            Pixel2D p = q.poll();
+            int x = p.getX();
+            int y = p.getY();
+            for (int i = 0; i < 4; i++) {
+                int nx = x + dx[i];
+                int ny = y + dy[i];
+                if (cyclic) {
+                    nx = (nx + getWidth()) % getWidth();
+                    ny = (ny + getHeight()) % getHeight();
+                }
+                if (nx < 0 || ny < 0 || nx >= getWidth() || ny >= getHeight())
+                    continue;
+                if (!visited[ny][nx] && getPixel(nx, ny) == oldColor) {
+                    visited[ny][nx] = true;
+                    setPixel(nx, ny, new_v);
+                    q.add(new Index2D(nx, ny));
+                    count++;
+                }
+            }
         }
-        else
-            ans =0;
-		return ans;
-	}
+        return count;
+    }
 
     /**
      * This function returns the shortest path between two coordinates.
-     * The function finds the shortest path by marking every pixel it gets to that isnt the answer
-     * as an obstacle then checks the ones around it. For every pixel it keeps the path up to it from the end to every side
-     * and at the end it returns the shortest of them.
+     * The function finds the shortest path by using BDF algorithm as presented in:
+     * https://en.wikipedia.org/wiki/Breadth-first_search
      * @param p1 first coordinate (start point).
      * @param p2 second coordinate (end point).
      * @param obsColor the color which is addressed as an obstacle.
      * @param cyclic is the map cyclic
      * @return the shortest path as array of pixels
      */
-	@Override
-	public Pixel2D[] shortestPath(Pixel2D p1, Pixel2D p2, int obsColor, boolean cyclic) {
-		Pixel2D[] ans = null;  // the result.
-        Map fill = new Map(this.map);
-        ans = (Pixel2D[]) shortestPatheRec(p1,p2,obsColor,cyclic,new ArrayList<Pixel2D>(), fill).toArray();
-		return ans;
-	}
+    @Override
+    public Pixel2D[] shortestPath(Pixel2D p1, Pixel2D p2, int obsColor, boolean cyclic) {
+        if (p1.equals(p2)) return new Pixel2D[]{p1};
+        boolean[][] visited = new boolean[getHeight()][getWidth()];
+        Pixel2D[][] parent = new Pixel2D[getHeight()][getWidth()];
+        ArrayDeque<Pixel2D> q = new ArrayDeque<>();
+        visited[p1.getY()][p1.getX()] = true;
+        q.add(p1);
+        int[] dx = {1, -1, 0, 0};
+        int[] dy = {0, 0, 1, -1};
+        while (!q.isEmpty()) {
+            Pixel2D v = q.poll();
+            int x = v.getX();
+            int y = v.getY();
+            if (v.equals(p2))
+                break;
+            for (int i = 0; i < 4; i++) {
+                int nx = x + dx[i];
+                int ny = y + dy[i];
+                if (cyclic) {
+                    nx = (nx + getWidth()) % getWidth();
+                    ny = (ny + getHeight()) % getHeight();
+                }
+                if (nx < 0 || nx >= getWidth() || ny < 0 || ny >= getHeight())
+                    continue;
+                if (visited[ny][nx])
+                    continue;
+                if (getPixel(nx, ny) == obsColor)
+                    continue;
+                visited[ny][nx] = true;
+                parent[ny][nx] = v;
+                q.add(new Index2D(nx, ny));
+            }
+        }
+        if (!visited[p2.getY()][p2.getX()]) return null;
+        LinkedList<Pixel2D> path = new LinkedList<>();
+        Pixel2D cur = p2;
+        while (!cur.equals(p1)) {
+            path.addFirst(cur);
+            cur = parent[cur.getY()][cur.getX()];
+        }
+        path.addFirst(p1);
+        return path.toArray(new Pixel2D[0]);
+    }
+
 
     /**
      * This function return a map that represents the length the shortest path from every
@@ -400,162 +449,4 @@ public class Map implements Map2D, Serializable{
         return ans;
     }
 	////////////////////// Private Methods ///////////////////////
-
-    /**
-     * Recursive fill algorithm
-     * @param p pixel to fill around
-     * @param oc original color replaced
-     * @param nc new color to fill
-     * @param counter amount of times swapped to this point
-     * @param cyc if the
-     * @return amount of times swapped
-     */
-    private int fill(Pixel2D p,int oc,int nc,int counter, boolean cyc) {
-        if (p.getX() < this.getWidth()&&p.getX()>=0) {
-            if (this.getPixel(p.getX() + 1, p.getY()) == oc) {
-                this.setPixel(p.getX() + 1, p.getY(), nc);
-                Index2D np = new Index2D(p.getX() + 1, p.getY());
-                return this.fill(np, oc, nc,counter+1,cyc);
-            }
-        }
-        else if (p.getX()>=this.getWidth()&&cyc) {
-            if (this.getPixel(0, p.getY()) == oc) {
-                this.setPixel(0, p.getY(), nc);
-                Index2D np = new Index2D(0, p.getY());
-                return this.fill(np, oc, nc,counter+1,cyc);
-            }
-        }
-        if (p.getX() > 0) {
-            if (this.getPixel(p.getX() - 1, p.getY()) == oc) {
-                this.setPixel(p.getX() - 1, p.getY(), nc);
-                Index2D np = new Index2D(p.getX() - 1, p.getY());
-                return this.fill(np, oc, nc,counter+1,cyc);
-            }
-        }
-        else if (p.getX()<=0&&cyc) {
-            if (this.getPixel(this.getWidth()-1, p.getY()) == oc) {
-                this.setPixel(this.getWidth()-1, p.getY(), nc);
-                Index2D np = new Index2D(this.getWidth()-1, p.getY());
-                return this.fill(np, oc, nc,counter+1,cyc);
-            }
-        }
-        if (p.getY() < this.getHeight()&&p.getY()>=0) {
-            if (this.getPixel(p.getX(), p.getY() + 1) == oc) {
-                this.setPixel(p.getX(), p.getY() + 1, nc);
-                Index2D np = new Index2D(p.getX(), p.getY() + 1);
-                return this.fill(np, oc, nc,counter+1,cyc);
-            }
-        }
-        else if (p.getY()>=this.getHeight()&&cyc) {
-            if (this.getPixel(p.getX(),0) == oc) {
-                this.setPixel(p.getX(), 0, nc);
-                Index2D np = new Index2D(p.getX(), 0);
-                return this.fill(np, oc, nc,counter+1,cyc);
-            }
-        }
-        if (p.getY() > 0) {
-            if (this.getPixel(p.getX(), p.getY() - 1) == oc) {
-                this.setPixel(p.getX(), p.getY() - 1, nc);
-                Index2D np = new Index2D(p.getX(), p.getY() - 1);
-                return this.fill(np, oc, nc,counter+1,cyc);
-            }
-        }
-        else if (p.getY()<=0&&cyc) {
-            if (this.getPixel(p.getX(),this.getHeight()-1) == oc) {
-                this.setPixel(p.getX(), this.getHeight()-1, nc);
-                Index2D np = new Index2D(p.getX(), this.getHeight()-1);
-                return this.fill(np, oc, nc,counter+1,cyc);
-            }
-        }
-        return counter;
-    }
-
-    /**
-     * Recursive shortest path algorithm
-     * @param p1 current pixel
-     * @param p2 goal pixel
-     * @param obsColor color of obsticle
-     * @param cyc is the map cyclic
-     * @param path the path followed
-     * @param filled a map that keeps the path
-     * @return the shortest path
-     */
-    private ArrayList<Pixel2D> shortestPatheRec(Pixel2D p1, Pixel2D p2, int obsColor, boolean cyc, ArrayList<Pixel2D> path, Map filled){
-        path.add(p1);
-        if (p1.equals(p2))
-            return path;
-        filled.setPixel(p1,obsColor);
-        ArrayList<Pixel2D> up=null;
-        ArrayList<Pixel2D> down=null;
-        ArrayList<Pixel2D> left=null;
-        ArrayList<Pixel2D> right=null;
-        if (p1.getX() < filled.getWidth()&&p1.getX()>=0) {
-            if (filled.getPixel(p1.getX() + 1, p1.getY()) != obsColor) {
-                Index2D np = new Index2D(p1.getX() + 1, p1.getY());
-                right = shortestPatheRec(np,p2,obsColor,cyc,path, filled);
-            }
-        }
-        else if (p1.getX()>=filled.getWidth()&&cyc) {
-            if (filled.getPixel(0, p1.getY()) !=obsColor) {
-                Index2D np = new Index2D(0, p1.getY());
-                right = shortestPatheRec(np,p2,obsColor,cyc,path, filled);
-            }
-        }
-        if (p1.getX() > 0) {
-            if (filled.getPixel(p1.getX() - 1, p1.getY()) != obsColor) {
-                Index2D np = new Index2D(p1.getX() - 1, p1.getY());
-                left = shortestPatheRec(np,p2,obsColor,cyc,path, filled);
-            }
-        }
-        else if (p1.getX()<=0&&cyc) {
-            if (filled.getPixel(filled.getWidth()-1, p1.getY()) != obsColor) {
-                Index2D np = new Index2D(filled.getWidth()-1, p1.getY());
-                left = shortestPatheRec(np,p2,obsColor,cyc,path, filled);
-            }
-        }
-        if (p1.getY() < filled.getHeight()&&p1.getY()>=0) {
-            if (filled.getPixel(p1.getX(), p1.getY() + 1) != obsColor) {
-                Index2D np = new Index2D(p1.getX(), p1.getY() + 1);
-                up = shortestPatheRec(np,p2,obsColor,cyc,path, filled);
-            }
-        }
-        else if (p1.getY()>=filled.getHeight()&&cyc) {
-            if (filled.getPixel(p1.getX(),0) != obsColor) {
-                Index2D np = new Index2D(p1.getX(), 0);
-                up = shortestPatheRec(np,p2,obsColor,cyc,path, filled);
-            }
-        }
-        if (p1.getY() > 0) {
-            if (filled.getPixel(p1.getX(), p1.getY() - 1) != obsColor) {
-                Index2D np = new Index2D(p1.getX(), p1.getY() - 1);
-                down = shortestPatheRec(np,p2,obsColor,cyc,path, filled);
-            }
-        }
-        else if (p1.getY()<=0&&cyc) {
-            if (filled.getPixel(p1.getX(),filled.getHeight()-1) !=obsColor) {
-                Index2D np = new Index2D(p1.getX(), filled.getHeight()-1);
-                down = shortestPatheRec(np,p2,obsColor,cyc,path, filled);
-            }
-        }
-        int dl=down.size();
-        int ll= left.size();
-        int rl=right.size();
-        ArrayList<Pixel2D> min = up;
-        if (dl<min.size()&&down!=null)
-            min = down;
-        else if (min==null) {
-            min = down;
-        }
-        if (ll< min.size()&&left!=null)
-            min = left;
-        else if (min==null) {
-            min = left;
-        }
-        if (rl< min.size()&&right!=null)
-            min = right;
-        else if (min==null) {
-            min = right;
-        }
-        return min;
-    }
 }
