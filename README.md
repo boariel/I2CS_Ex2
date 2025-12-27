@@ -107,5 +107,7 @@ The `Ex2_GUI` class provides a simple graphical interface for displaying, loadin
 
 - **`valueToColor(int v)`** – Converts an integer value to a color using HSB color mapping. Used by `drawMat` for coloring pixels.
 
+## Ex2_GUI Output Example
 
+<img width="512" height="567" alt="Screenshot 2025-12-27 171423" src="https://github.com/user-attachments/assets/fbe1787c-6e64-4e24-9a12-254a3dd081f7" />
 
