@@ -91,7 +91,7 @@ public class Ex2_GUI {
             {34,56,7,9,0}
         };
         String mapFile = "map.txt";
-        Map2D mp1 = new Map2D(m);
+        Map2D mp1 = new Map(m);
         saveMap(mp1,mapFile);
         Map2D map = loadMap(mapFile);
         drawMap(map);
