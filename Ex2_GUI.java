@@ -84,7 +84,15 @@ public class Ex2_GUI {
         }
     }
     public static void main(String[] a) {
+        int[][] m = {
+            {1,1,1,1,4},
+            {2,2,3,7,-1},
+            {1,2,34,9,-68},
+            {34,56,7,9,0}
+        };
         String mapFile = "map.txt";
+        Map2D mp1 = new Map2D(m);
+        saveMap(mp1,mapFile);
         Map2D map = loadMap(mapFile);
         drawMap(map);
     }
