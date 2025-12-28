@@ -13,6 +13,7 @@ as a graphical interface.
 | `Map2D.java` | An interface that represents a 2D map as a raster matrix, image or maze. |
 | `Map.java` | An instance class of Map2D interface. |
 | `*Test.java` | Unit tests for core functionality. |
+| `StdDraw.java` | A class used to help display the GUI. |
 
 
 ## Map Class Overview
